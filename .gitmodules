@@ -4,3 +4,6 @@
 [submodule "src/components/lib/ck/ck"]
 	path = src/components/lib/ck/ck
 	url = https://github.com/gwsystems/ck.git
+[submodule "src/components/lib/sqlite/sqlite"]
+	path = src/components/lib/sqlite/sqlite
+	url = https://github.com/msdx321/sqlite.git

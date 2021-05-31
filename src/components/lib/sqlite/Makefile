@@ -2,29 +2,26 @@
 # for many of these to be empty.
 #
 # The library names associated with .a files output that are linked
-# (via, for example, -lLIBC) into dependents. This list should be
-# "LIBC" for output files such as libLIBC.a.
-#
-# NOTE: libc is special-cased and the compilation is orchestrated
-# directly. It should have no dependencies.
-LIBRARY_OUTPUT = c crypt m pthread resolv rt
+# (via, for example, -lsqlite) into dependents. This list should be
+# "sqlite" for output files such as libsqlite.a.
+LIBRARY_OUTPUT = sqlite3
 # The .o files that are mandatorily linked into dependents. This is
 # rarely used, and only when normal .a linking rules will avoid
 # linking some necessary objects. This list is of names (for example,
-# LIBC) which will generate LIBC.lib.o. Do NOT include the list of .o
+# sqlite) which will generate sqlite.lib.o. Do NOT include the list of .o
 # files here. Please note that using this list is *very rare* and
 # should only be used when the .a support above is not appropriate.
-OBJECT_OUTPUT =
+OBJECT_OUTPUT = 
 # The path within this directory that holds the .h files for
 # dependents to compile with (./ by default). Will be fed into the -I
 # compiler arguments.
-INCLUDE_PATHS = musl-1.1.11/include/
+INCLUDE_PATHS = sqlite/
 # The interfaces this component is dependent on for compilation (this
 # is a list of directory names in interface/)
 INTERFACE_DEPENDENCIES =
 # The library dependencies this component is reliant on for
 # compilation/linking (this is a list of directory names in lib/)
-LIBRARY_DEPENDENCIES =
+LIBRARY_DEPENDENCIES = component posix libc
 # Note: Both the interface and library dependencies should be
 # *minimal*. That is to say that removing a dependency should cause
 # the build to fail. The build system does not validate this
@@ -43,7 +40,7 @@ LIBRARY_DEPENDENCIES =
 # libraries written for composite. Get rid of this if you require a
 # custom Makefile (e.g. if you use an existing
 # (non-composite-specific) library. An example of this is `kernel`.
-## include Makefile.lib
+# include Makefile.lib
 
 ## Type 2, external library: If you need to specialize the Makefile
 ## for an external library, you can add the external code as a
@@ -65,24 +62,27 @@ LIBRARY_DEPENDENCIES =
 # init: clean all
 # distclean: clean
 
-MUSLDIR=musl-1.1.11/
-MUSLINC=$(MUSLDIR)/include/
-MUSLLIB=$(MUSLDIR)/lib/
-
 include Makefile.src Makefile.comp Makefile.dependencies
 
-.PHONY: all clean init distclean
+.PHONY: all clean init distclean config clean_lib
+CINC_ENV = $(CINC) $(DEPENDENCY_INCPATH)
+CFLAGS   = $(CINC_ENV)
+export CINC_ENV
+export CFLAGS
+
 all:
-clean:
+	$(info Building sqlite library...)
+	make -s -C sqlite libsqlite3.a
+	@cp sqlite/libsqlite3.a .
 
-init:
-	$(info Building libc (musl)...)
-	cd $(MUSLDIR); ./configure "CFLAGS=-m32 -O3" "LDFLAGS=-Wl,-melf_i386" --disable-shared --target=i386; cd ..
-	make -C $(MUSLDIR)
-	make -C $(MUSLDIR) install
-	cp $(MUSLLIB)*.a .
-	rm libutil.a
+clean_lib:
+	make -s -C sqlite clean
 
-distclean:
-	make -C $(MUSLDIR) distclean
-	rm -rf *.a
+clean: clean_lib config
+
+config:
+	$(info Configuring the sqlite library)
+	make -s -C sqlite sqlite3.h
+
+init: clean config
+distclean: clean

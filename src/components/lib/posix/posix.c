@@ -12,9 +12,12 @@
 #include <cos_component.h>
 #include <cos_defkernel_api.h>
 #include <llprint.h>
+#include <memmgr.h>
+/*
 #include <sl.h>
 #include <sl_lock.h>
 #include <sl_thd.h>
+*/
 
 volatile int* null_ptr = NULL;
 #define ABORT() do {int i = *null_ptr;} while(0)
@@ -31,7 +34,7 @@ libc_syscall_override(cos_syscall_t fn, int syscall_num)
 	cos_syscalls[syscall_num] = fn;
 }
 
-struct sl_lock stdout_lock = SL_LOCK_STATIC_INIT();
+//struct sl_lock stdout_lock = SL_LOCK_STATIC_INIT();
 
 ssize_t
 write_bytes_to_stdout(const char *buf, size_t count)
@@ -46,9 +49,9 @@ cos_write(int fd, const void *buf, size_t count)
 {
 	/* You shouldn't write to stdin anyway, so don't bother special casing it */
 	if (fd == 1 || fd == 2) {
-		sl_lock_take(&stdout_lock);
+		//sl_lock_take(&stdout_lock);
 		write_bytes_to_stdout((const char *) buf, count);
-		sl_lock_release(&stdout_lock);
+		//sl_lock_release(&stdout_lock);
 		return count;
 	} else {
 		printc("fd: %d not supported!\n", fd);
@@ -60,13 +63,13 @@ ssize_t
 cos_writev(int fd, const struct iovec *iov, int iovcnt)
 {
 	if (fd == 1 || fd == 2) {
-		sl_lock_take(&stdout_lock);
+		//sl_lock_take(&stdout_lock);
 		int i;
 		ssize_t ret = 0;
 		for(i=0; i<iovcnt; i++) {
 			ret += write_bytes_to_stdout((const void *)iov[i].iov_base, iov[i].iov_len);
 		}
-		sl_lock_release(&stdout_lock);
+		//sl_lock_release(&stdout_lock);
 		return ret;
 	} else {
 		printc("fd: %d not supported!\n", fd);
@@ -111,7 +114,8 @@ cos_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 		return MAP_FAILED;
 	}
 
-	addr = (void *)cos_page_bump_allocn(&cos_defcompinfo_curr_get()->ci, length);
+	//addr = (void *)cos_page_bump_allocn(&cos_defcompinfo_curr_get()->ci, length);
+	addr = (void *)memmgr_heap_page_allocn(length / PAGE_SIZE);
 	if (!addr){
 		ret = (void *) -1;
 	} else {
@@ -170,7 +174,8 @@ cos_mprotect(void *addr, size_t len, int prot)
 pid_t
 cos_gettid(void)
 {
-	return (pid_t) sl_thdid();
+	//return (pid_t) sl_thdid();
+	return 0;
 }
 
 int
@@ -221,16 +226,20 @@ cos_nanosleep(const struct timespec *req, struct timespec *rem)
 		return -1;
 	}
 
-	wakeup_deadline        = sl_now() + sl_usec2cyc(time_to_microsec(req));
-	completed_successfully = sl_thd_block_timeout(0, wakeup_deadline);
-	wakeup_time   = sl_now();
+	//wakeup_deadline        = sl_now() + sl_usec2cyc(time_to_microsec(req));
+	wakeup_deadline = 0;
+	//completed_successfully = sl_thd_block_timeout(0, wakeup_deadline);
+	completed_successfully = 0;
+	//wakeup_time   = sl_now();
+	wakeup_time = 0;
 
 	if (completed_successfully || wakeup_time > wakeup_deadline) {
 		return 0;
 	} else {
 		errno = EINTR;
 		if (rem) {
-			remaining_microseconds = sl_cyc2usec(wakeup_deadline - wakeup_time);
+			//remaining_microseconds = sl_cyc2usec(wakeup_deadline - wakeup_time);
+			remaining_microseconds = 0;
 			remaining_seconds      = remaining_microseconds / 1000000;
 			remaining_nano_seconds = (remaining_microseconds - remaining_seconds * 1000000) * 1000;
 			*rem = (struct timespec) {
@@ -263,23 +272,27 @@ cos_set_tid_address(int *tidptr)
  * };
  */
 
-void* backing_data[SL_MAX_NUM_THDS];
+//void* backing_data[SL_MAX_NUM_THDS];
+void* backing_data[1];
 
 static void
 setup_thread_area(struct sl_thd *thread, void* data)
 {
 	struct cos_compinfo *ci = cos_compinfo_get(cos_defcompinfo_curr_get());
-	thdid_t thdid = sl_thd_thdid(thread);
+	//thdid_t thdid = sl_thd_thdid(thread);
+	thdid_t thdid = 0;
 
 	backing_data[thdid] = data;
 
-	cos_thd_mod(ci, sl_thd_thdcap(thread), &backing_data[thdid]);
+	//cos_thd_mod(ci, sl_thd_thdcap(thread), &backing_data[thdid]);
+	cos_thd_mod(ci, 0, &backing_data[thdid]);
 }
 
 int
 cos_set_thread_area(void* data)
 {
-	setup_thread_area(sl_thd_curr(), data);
+	//setup_thread_area(sl_thd_curr(), data);
+	setup_thread_area(0, data);
 	return 0;
 }
 
@@ -291,11 +304,13 @@ cos_clone(int (*func)(void *), void *stack, int flags, void *arg, pid_t *ptid, v
 		return -1;
 	}
 
-	struct sl_thd * thd = sl_thd_alloc((cos_thd_fn_t) func, arg);
+	//struct sl_thd * thd = sl_thd_alloc((cos_thd_fn_t) func, arg);
+	struct sl_thd * thd = 0;
 	if (tls) {
 		setup_thread_area(thd, tls);
 	}
-	return sl_thd_thdid(thd);
+	//return sl_thd_thdid(thd);
+	return 0;
 }
 
 #define FUTEX_WAIT		0
@@ -316,13 +331,13 @@ cos_clone(int (*func)(void *), void *stack, int flags, void *arg, pid_t *ptid, v
 struct futex_data
 {
 	int *uaddr;
-	struct ps_list_head waiters;
+	void* waiters;
 };
 
 struct futex_waiter
 {
 	thdid_t thdid;
-	struct ps_list list;
+	void* list;
 };
 
 #define FUTEX_COUNT 20
@@ -331,30 +346,12 @@ struct futex_data futexes[FUTEX_COUNT];
 struct futex_data *
 lookup_futex(int *uaddr)
 {
-	int last_free = -1;
-	int i;
-
-	for (i = 0; i < FUTEX_COUNT; i++) {
-		if (futexes[i].uaddr == uaddr) {
-			return &futexes[i];
-		} else if (futexes[i].uaddr == 0) {
-			last_free = i;
-		}
-	}
-	if (last_free >= 0) {
-		futexes[last_free] = (struct futex_data) {
-			.uaddr = uaddr
-		};
-		ps_list_head_init(&futexes[last_free].waiters);
-		return &futexes[last_free];
-	}
-	printc("Out of futex ids!");
 	assert(0);
 }
 
 /* TODO: Cleanup empty futexes */
 
-struct sl_lock futex_lock = SL_LOCK_STATIC_INIT();
+//struct sl_lock futex_lock = SL_LOCK_STATIC_INIT();
 
 /*
  * precondition: futex_lock is taken
@@ -362,57 +359,12 @@ struct sl_lock futex_lock = SL_LOCK_STATIC_INIT();
 int
 cos_futex_wait(struct futex_data *futex, int *uaddr, int val, const struct timespec *timeout)
 {
-	cycles_t   deadline;
-	microsec_t wait_time;
-	struct futex_waiter waiter = (struct futex_waiter) {
-		.thdid = sl_thdid()
-	};
-
-	if (*uaddr != val) return EAGAIN;
-
-	ps_list_init_d(&waiter);
-	ps_list_head_append_d(&futex->waiters, &waiter);
-
-	if (timeout != NULL) {
-		wait_time = time_to_microsec(timeout);
-		deadline = sl_now() + sl_usec2cyc(wait_time);
-	}
-
-	do {
-		/* No race here, we'll enter the awoken state if things go wrong */
-		sl_lock_release(&futex_lock);
-		if (timeout == NULL) {
-			sl_thd_block(0);
-		} else {
-			sl_thd_block_timeout(0, deadline);
-		}
-		sl_lock_take(&futex_lock);
-	/* We continue while the waiter is in the list, and the deadline has not elapsed */
-	} while(!ps_list_singleton_d(&waiter) && (timeout == NULL || sl_now() < deadline));
-
-	/* If our waiter is still in the list (meaning we quit because the deadline elapsed),
-	 * then we remove it from the list. */
-	if (!ps_list_singleton_d(&waiter)) {
-		ps_list_rem_d(&waiter);
-	}
-	/* We exit the function with futex_lock taken */
 	return 0;
 }
 
 int cos_futex_wake(struct futex_data *futex, int wakeup_count)
 {
-	struct futex_waiter *waiter, *tmp;
-	int awoken = 0;
-
-	ps_list_foreach_del_d(&futex->waiters, waiter, tmp) {
-		if (awoken >= wakeup_count) {
-			return awoken;
-		}
-		ps_list_rem_d(waiter);
-		sl_thd_wakeup(waiter->thdid);
-		awoken += 1;
-	}
-	return awoken;
+	return 0;
 }
 
 int
@@ -420,35 +372,7 @@ cos_futex(int *uaddr, int op, int val,
           const struct timespec *timeout, /* or: uint32_t val2 */
 		  int *uaddr2, int val3)
 {
-	int result = 0;
-	struct futex_data *futex;
-
-	sl_lock_take(&futex_lock);
-
-	/* TODO: Consider whether these options have sensible composite interpretations */
-	op &= ~FUTEX_PRIVATE;
-	assert(!(op & FUTEX_CLOCK_REALTIME));
-
-	futex = lookup_futex(uaddr);
-	switch (op) {
-		case FUTEX_WAIT:
-			result = cos_futex_wait(futex, uaddr, val, timeout);
-			if (result != 0) {
-				errno = result;
-				result = -1;
-			}
-			break;
-		case FUTEX_WAKE:
-			result = cos_futex_wake(futex, val);
-			break;
-		default:
-			printc("Unsupported futex operation");
-			assert(0);
-	}
-
-	sl_lock_release(&futex_lock);
-
-	return result;
+	return 0;
 }
 
 
@@ -462,7 +386,7 @@ pre_syscall_default_setup()
 
 	cos_defcompinfo_init();
 	cos_meminfo_init(&(ci->mi), BOOT_MEM_KM_BASE, COS_MEM_KERN_PA_SZ, BOOT_CAPTBL_SELF_UNTYPED_PT);
-	sl_init(SL_MIN_PERIOD_US);
+	//sl_init(SL_MIN_PERIOD_US);
 }
 
 void
