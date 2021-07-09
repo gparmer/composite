@@ -19,7 +19,9 @@ SHARED_FLAGS=-fno-merge-constants -nostdinc -nostdlib -fno-pic -fno-pie
 #OPT= -g -fvar-tracking
 OPT= -O3
 
-CFLAGS=$(ARCH_CFLAGS) -Wall -Wextra -Wno-unused-parameter -Wno-type-limits -Wno-unused-function -fno-stack-protector -fno-omit-frame-pointer -Wno-unused-variable $(CINC) $(MUSLINC) $(OPT) $(SHARED_FLAGS)
+# This removes warnings from Ubuntu 20 (gcc 9.3), but should likely be removed by fixing the issue
+TMPFLGS := -Wno-address-of-packed-member
+CFLAGS=$(ARCH_CFLAGS) -Wall -Wextra $(TMPFLGS) -Wno-unused-parameter -Wno-type-limits -Wno-unused-function -fno-stack-protector -fno-omit-frame-pointer -Wno-unused-variable $(CINC) $(MUSLINC) $(OPT) $(SHARED_FLAGS)
 CXXFLAGS=-fno-exceptions -fno-threadsafe-statics -Wno-write-strings $(CFLAGS)
 LDFLAGS=$(ARCH_LDFLAGS) -no-pic
 MUSLCFLAGS=$(CFLAGS) -lc -lgcc -Xlinker -r

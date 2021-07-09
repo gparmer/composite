@@ -212,6 +212,32 @@ cos_thdid(void)
 		goto label;      \
 	} while (0)
 
+/*
+ * Assume there is a variable of the type of the expression called
+ * `ret`. This assumes that ret == 0 is success, otherwise jump to the
+ * label.
+ */
+#define ERR_CHECK(expr, label)			\
+	do {					\
+		ret = (expr);			\
+		if (ret != 0) goto label;	\
+	} while (0)
+
+/*
+ * Same as ERR_CHECK, but assumes that `ret` is of a pointer type,
+ * thus it errors out on `NULL`. "Returns" the pointer.
+ *
+ * This is a macro as we want both to enable the jumping to the
+ * function's local label, and also return the pointer (using `gcc`
+ * statement expressions).
+ */
+#define ERR_CHECK_NULL(expr, label)		\
+	({					\
+		ret = (expr);			\
+		if (!ret) goto label;		\
+		ret;				\
+	})
+
 static inline long
 cos_spd_id(void)
 {

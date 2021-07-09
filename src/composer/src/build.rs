@@ -78,7 +78,7 @@ fn tarball_create(
 fn constructor_tarball_create(
     id: &ComponentId,
     s: &SystemState,
-    b: &BuildState,
+    b: &dyn BuildState,
 ) -> Result<Option<String>, String> {
     let me = component(&s, &id);
     let tar_path = b.comp_file_path(&id, &"initfs_constructor.tar".to_string(), &s)?;
@@ -112,7 +112,7 @@ fn constructor_tarball_create(
 fn constructor_serialize_args(
     id: &ComponentId,
     s: &SystemState,
-    b: &BuildState,
+    b: &dyn BuildState,
 ) -> Result<String, String> {
     let mut sinvs = Vec::new();
     let mut ids = Vec::new();

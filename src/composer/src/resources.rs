@@ -91,7 +91,7 @@ fn comp_config(_s: &SystemState, _id: &ComponentId, _cfg: &mut CompConfigState) 
 fn sched_config_serv_client(s: &SystemState, id: &ComponentId) -> Vec<ArgsKV> {
     let mut init = Vec::new();
 
-    let props: &PropertiesPass = s.get_properties();
+    let props: &dyn PropertiesPass = s.get_properties();
     if !props.service_is_a(&id, ServiceType::Scheduler) {
         return init;
     }
@@ -111,7 +111,7 @@ fn sched_config_serv_client(s: &SystemState, id: &ComponentId) -> Vec<ArgsKV> {
 fn sched_config_clients(s: &SystemState, id: &ComponentId) -> Vec<ArgsKV> {
     let mut init = Vec::new();
 
-    let props: &PropertiesPass = s.get_properties();
+    let props: &dyn PropertiesPass = s.get_properties();
     if !props.service_is_a(&id, ServiceType::Scheduler) {
         return init;
     }
@@ -157,7 +157,7 @@ fn cap2kvarg(capid: u32, cap: &CapRes) -> ArgsKV {
 }
 
 fn capmgr_config(s: &SystemState, id: &ComponentId, cfg: &mut CompConfigState) {
-    let props: &PropertiesPass = s.get_properties();
+    let props: &dyn PropertiesPass = s.get_properties();
     if !props.service_is_a(&id, ServiceType::CapMgr) {
         return;
     }
@@ -235,7 +235,7 @@ fn capmgr_config(s: &SystemState, id: &ComponentId, cfg: &mut CompConfigState) {
 }
 
 fn constructor_config(s: &SystemState, id: &ComponentId, cfg: &mut CompConfigState) {
-    let props: &PropertiesPass = s.get_properties();
+    let props: &dyn PropertiesPass = s.get_properties();
     if !props.service_is_a(&id, ServiceType::Constructor) {
         return;
     }

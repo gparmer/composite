@@ -32,6 +32,19 @@ typedef u64_t         tcap_uid_t;
 typedef u32_t         sched_tok_t;
 
 /*
+ * This is more complicated than a direct comparison due to
+ * wraparound. We assume that no cycle value will be referenced that
+ * is more than 2^63 away from another, thus producing the following
+ * logic. Practically, this often simply means that timeouts cannot be
+ * more than 2^63 into the future.
+ */
+static inline int
+cycles_greater_than(cycles_t g, cycles_t l)
+{
+	return (s64_t)(g - l) > 0;
+}
+
+/*
  * The assumption in the following is that cycles_t are higher
  * fidelity than tcap_time_t:
  *

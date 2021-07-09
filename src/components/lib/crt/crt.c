@@ -678,6 +678,7 @@ crt_thd_create_in(struct crt_thd *t, struct crt_comp *c, thdclosure_index_t clos
  * - @t the thread structure to be populated
  * - @self the crt_comp that represents us
  * - @fn/@data the function to be invoked, passed specific data.
+ * - @return `0` if successful, `<0` otherwise
  */
 int
 crt_thd_create(struct crt_thd *t, struct crt_comp *self, crt_thd_fn_t fn, void *data)
@@ -688,7 +689,7 @@ crt_thd_create(struct crt_thd *t, struct crt_comp *self, crt_thd_fn_t fn, void *
 	assert(t && self);
 	if (idx < 1) return 0;
 	ret = crt_thd_create_in(t, self, idx);
-	if (!ret) cos_thd_init_free(idx);
+	if (ret < 0) cos_thd_init_free(idx);
 
 	return ret;
 }

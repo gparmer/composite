@@ -90,7 +90,7 @@ syscall_emulation_setup()
 CWEAKSYMB long
 cos_syscall_handler(int syscall_num, long a, long b, long c, long d, long e, long f, long g)
 {
-	printc("Default syscall handler callled (syscall: %d), faulting!", syscall_num);
+	printc("Default syscall handler called (syscall: %d, first arg: %ld), faulting!", syscall_num, a);
 	assert(0);
 	return 0;
 }

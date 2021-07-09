@@ -6,7 +6,9 @@ AS := as --32 -g
 
 INCPATH := ../../kernel/include
 INCS    := -I$(INCPATH) -I$(INCPATH)/shared/
-CFLAGS  := -g3 -O3 -ffreestanding -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -nostdinc -nostdlib -fno-pic -mno-red-zone $(INCS)
+# This variable gets rid of the all the warnings on Ubuntu 20, but we should look into each...
+TMPFLGS := -Wno-address-of-packed-member
+CFLAGS  := -g3 -O3 -ffreestanding -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable $(TMPFLGS) -nostdinc -nostdlib -fno-pic -mno-red-zone $(INCS)
 LDFLAGS := -nostdlib -fno-builtin -nostartfiles -nostdinc -nodefaultlibs
 
 KERNEL := kernel.img
