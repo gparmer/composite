@@ -1,0 +1,2 @@
+file ./kernel.img
+target remote:1234

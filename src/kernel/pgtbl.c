@@ -38,13 +38,13 @@ pgtbl_deactivate(struct captbl *t, struct cap_captbl *dest_ct_cap, unsigned long
 }
 
 int
-pgtbl_mapping_add(pgtbl_t pt, u32_t addr, u32_t page, u32_t flags, u32_t order)
+pgtbl_mapping_add(pgtbl_t pt, unsigned long addr, unsigned long page, u32_t flags, u32_t order)
 {
 	return chal_pgtbl_mapping_add(pt, addr, page, flags, order);
 }
 
 int
-pgtbl_cosframe_add(pgtbl_t pt, u32_t addr, u32_t page, u32_t flags, u32_t order)
+pgtbl_cosframe_add(pgtbl_t pt, unsigned long addr, unsigned long page, u32_t flags, u32_t order)
 {
 	return chal_pgtbl_cosframe_add(pt, addr, page, flags, order);
 }
@@ -78,7 +78,7 @@ pgtbl_mapping_scan(struct cap_pgtbl *pt)
 }
 
 void *
-pgtbl_lkup_lvl(pgtbl_t pt, u32_t addr, u32_t *flags, u32_t start_lvl, u32_t end_lvl)
+pgtbl_lkup_lvl(pgtbl_t pt, unsigned long addr, u32_t *flags, u32_t start_lvl, u32_t end_lvl)
 {
 	return chal_pgtbl_lkup_lvl(pt, addr, flags, start_lvl, end_lvl);
 }

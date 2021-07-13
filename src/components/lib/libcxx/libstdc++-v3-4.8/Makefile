@@ -1,6 +1,6 @@
 BUILDDIR := ../build/libstdc++
 INCLUDE := -I../include
-MUSLFLAG := -isystem ../../libc/musl-1.1.11/include
+MUSLFLAG := -isystem ../../libc/musl-1.2.0/include
 include Makefile.inc
 
 EXCEPTION :=

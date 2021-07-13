@@ -1,6 +1,6 @@
 include Makefile.src Makefile.comp
 
-CALC_DEPS_SCRIPT   = python $(CDIR)cidl/calculate_dependencies.py $(shell pwd)/ $(CDIR)
+CALC_DEPS_SCRIPT   = python2 $(CDIR)cidl/calculate_dependencies.py $(shell pwd)/ $(CDIR)
 LIBRARY_DEP_LIST   =$(strip $(shell $(CALC_DEPS_SCRIPT) libdeps))
 INTERFACE_DEP_LIST =$(strip $(shell $(CALC_DEPS_SCRIPT) ifdeps))
 # List of -L library paths

@@ -24,7 +24,11 @@
 
 #define CAPTBL_DEPTH 2
 #define CAPTBL_INTERNSZ (sizeof(int *))
-#define CAPTBL_INTERN_ORD 9 /* log(PAGE_SIZE/(2*(CAPTBL_DEPTH-1)*CAPTBL_INTERNSZ)) */
+#if defined(__x86_64__)
+	#define CAPTBL_INTERN_ORD 8 /* log(PAGE_SIZE/(2*(CAPTBL_DEPTH-1)*CAPTBL_INTERNSZ)) */
+#else
+	#define CAPTBL_INTERN_ORD 9
+#endif
 #define CAPTBL_LEAFSZ (sizeof(struct cap_min))
 #define CAPTBL_LEAF_ORD 7 /* log(PAGE_SIZE/(2*CAPTBL_LEAFSZ)) */
 
@@ -71,7 +75,7 @@ struct cap_header {
 	cap_flags_t flags : CAP_HEAD_FLAGS_SZ;
 	cap_t       type : CAP_HEAD_TYPE_SZ;
 
-	u8_t post[0];
+	u8_t post[];
 } __attribute__((packed));
 
 struct cap_min {
@@ -246,13 +250,22 @@ captbl_lkup(struct captbl *t, capid_t cap)
 }
 
 static inline int
-__captbl_store(unsigned long *addr, unsigned long new, unsigned long old)
+__captbl_store_32(u32_t *addr, u32_t new, u32_t old)
 {
-	if (!cos_cas(addr, old, new)) return -1;
+	if (!cos_cas_32(addr, old, new)){ return -1;}
 
 	return 0;
 }
-#define CTSTORE(a, n, o) __captbl_store((unsigned long *)a, *(unsigned long *)n, *(unsigned long *)o)
+
+#define CTSTORE(a, n, o) \
+	({                            \
+		int tmp_ret = 0;     \
+		u32_t *tmp_n = n;   \
+		u32_t *tmp_o = o;   \
+		tmp_ret = __captbl_store_32((u32_t *)a, *tmp_n, *tmp_o); \
+		tmp_ret; \
+	})
+
 #define cos_throw(label, errno) \
 	{                       \
 		ret = (errno);  \
@@ -335,7 +348,7 @@ captbl_add(struct captbl *t, capid_t cap, cap_t type, int *retval)
 	}
 
 	if (l.size != sz) l.size = sz;
-	if (unlikely(__captbl_header_validate(&l, sz))) cos_throw(err, -EINVAL);
+	if (unlikely(__captbl_header_validate(&l, sz))){ cos_throw(err, -EINVAL);}
 
 	/* FIXME: we should _not_ do this here.  This should be done
 	 * in step 3 of the protocol for setting capabilities, not 1 */
@@ -343,7 +356,7 @@ captbl_add(struct captbl *t, capid_t cap, cap_t type, int *retval)
 		l.type        = type;
 		l.liveness_id = 0;
 	}
-	if (CTSTORE(h, &l, &o)) cos_throw(err, -EEXIST); /* commit */
+	if (CTSTORE(h, (u32_t *)&l,(u32_t *)&o)) cos_throw(err, -EEXIST); /* commit */
 
 	/* FIXME: same as above */
 	if (p != h) {
@@ -407,7 +420,7 @@ captbl_del(struct captbl *t, capid_t cap, cap_t type, livenessid_t lid)
 		l.type = CAP_QUIESCENCE;
 	}
 
-	if (CTSTORE(h, &l, &o)) cos_throw(err, -EEXIST); /* commit */
+	if (CTSTORE(h, (u32_t *)&l, (u32_t *)&o)) cos_throw(err, -EEXIST); /* commit */
 err:
 	return ret;
 }
@@ -453,7 +466,7 @@ captbl_prune(struct captbl *t, capid_t cap, u32_t depth, int *retval)
 	if (unlikely(!intern)) cos_throw(err, -EPERM);
 	p   = *intern;
 	new = (unsigned long)CT_DEFINITVAL;
-	if (CTSTORE(intern, &new, &p)) cos_throw(err, -EEXIST); /* commit */
+	if (CTSTORE(intern, (u32_t*)&new, (u32_t *)&p)) cos_throw(err, -EEXIST); /* commit */
 done:
 	*retval = ret;
 	return (void *)p;

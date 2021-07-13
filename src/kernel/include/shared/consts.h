@@ -67,6 +67,8 @@
 #define round_up_to_page(x) round_up_to_pow2(x, PAGE_SIZE)
 #define round_to_pgd_page(x) round_to_pow2(x, PGD_SIZE)
 #define round_up_to_pgd_page(x) round_up_to_pow2(x, PGD_SIZE)
+#define round_up_to_pgt3_page(x) round_up_to_pow2(x, PGT3_SIZE)
+#define round_to_pgt3_page(x) round_to_pow2(x, PGT3_SIZE)
 
 #define CACHE_LINE (64)
 #define CACHE_ALIGNED __attribute__((aligned(CACHE_LINE)))

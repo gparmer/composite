@@ -7,7 +7,7 @@
 #include "kernel_tests.h"
 
 static int      failure = 0;
-struct perfdata result;
+static struct perfdata result;
 struct results  result_sinv;
 
 #define ARRAY_SIZE 10000

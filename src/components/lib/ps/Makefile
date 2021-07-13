@@ -67,7 +67,7 @@ all: config
 
 clean_lib:
 	@rm -f libps.a
-	make -C ps clean
+	-make -C ps clean
 
 # need to make sure the ps_plat.h is always available
 clean: clean_lib config

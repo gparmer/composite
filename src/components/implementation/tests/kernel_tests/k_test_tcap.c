@@ -11,7 +11,7 @@
 
 struct results result_test_timer;
 struct results result_budgets_single;
-struct perfdata result;
+static struct perfdata result;
 
 #define ARRAY_SIZE 10000
 static cycles_t test_results[ARRAY_SIZE] = { 0 };

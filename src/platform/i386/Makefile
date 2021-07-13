@@ -27,6 +27,7 @@ WARNINGS += -Wstrict-prototypes
 WARNINGS += -Wundef
 WARNINGS += -Wvolatile-register-var
 WARNINGS += -Wwrite-strings
+WARNINGS += -Wno-address-of-packed-member
 
 CFLAGS += $(WARNINGS)
 

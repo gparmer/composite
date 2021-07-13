@@ -17,7 +17,11 @@
 #define HW_IRQ_EXTERNAL_MIN 32
 #define HW_IRQ_EXTERNAL_MAX 63
 
-struct cap_asnd hw_asnd_caps[HW_IRQ_TOTAL];
+/*
+ * X86_64-FIXME:
+ * Change globa var hw_asnd_caps to static
+ */
+static struct cap_asnd hw_asnd_caps[HW_IRQ_TOTAL];
 
 struct cap_hw {
 	struct cap_header h;

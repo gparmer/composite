@@ -1,6 +1,6 @@
 BUILDDIR := ../../build/libsupc++
 INCLUDE := -I../../include
-MUSLFLAG := -isystem ../../../libc/musl-1.1.11/include
+MUSLFLAG := -isystem ../../../libc/musl-1.2.0/include
 include ../Makefile.inc
 
 EXCEPTION := eh_alloc.o eh_arm.o eh_aux_runtime.o eh_call.o eh_catch.o eh_exception.o eh_throw.o \

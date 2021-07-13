@@ -90,7 +90,7 @@ struct cap_thd {
 } __attribute__((packed));
 
 static void
-thd_upcall_setup(struct thread *thd, u32_t entry_addr, int option, int arg1, int arg2, int arg3)
+thd_upcall_setup(struct thread *thd, unsigned long entry_addr, int option, int arg1, int arg2, int arg3)
 {
 	regs_upcall_setup(&thd->regs, entry_addr, option, thd->tid | (get_cpuid() << 16), arg1, arg2, arg3);
 }

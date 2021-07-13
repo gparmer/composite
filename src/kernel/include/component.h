@@ -45,11 +45,11 @@ comp_activate(struct captbl *t, capid_t cap, capid_t capin, capid_t captbl_cap, 
 
 	v = ptc->refcnt_flags;
 	if (v & CAP_MEM_FROZEN_FLAG) return -EINVAL;
-	if (cos_cas((unsigned long *)&ptc->refcnt_flags, v, v + 1) != CAS_SUCCESS) return -ECASFAIL;
+	if (cos_cas_32((u32_t *)&ptc->refcnt_flags, v, v + 1) != CAS_SUCCESS) return -ECASFAIL;
 
 	v = ctc->refcnt_flags;
 	if (v & CAP_MEM_FROZEN_FLAG) cos_throw(undo_ptc, -EINVAL);
-	if (cos_cas((unsigned long *)&ctc->refcnt_flags, v, v + 1) != CAS_SUCCESS) {
+	if (cos_cas_32((u32_t *)&ctc->refcnt_flags, v, v + 1) != CAS_SUCCESS) {
 		/* undo before return */
 		cos_throw(undo_ptc, -ECASFAIL);
 	}

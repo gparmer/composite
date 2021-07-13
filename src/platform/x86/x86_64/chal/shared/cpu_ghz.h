@@ -1,0 +1,3 @@
+#define CPU_GHZ 1.20
+#define NUM_CPU_SOCKETS 1
+#define COS_PLATFORM I386

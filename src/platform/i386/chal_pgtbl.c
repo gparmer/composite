@@ -51,7 +51,7 @@ chal_pgtbl_flag(unsigned long input)
 }
 
 int
-chal_pgtbl_kmem_act(pgtbl_t pt, u32_t addr, unsigned long *kern_addr, unsigned long **pte_ret)
+chal_pgtbl_kmem_act(pgtbl_t pt, unsigned long addr, unsigned long *kern_addr, unsigned long **pte_ret)
 {
 	struct ert_intern *pte;
 	u32_t              orig_v, new_v, accum = 0;
@@ -264,7 +264,7 @@ err:
 }
 
 int
-chal_pgtbl_mapping_add(pgtbl_t pt, u32_t addr, u32_t page, u32_t flags, u32_t order)
+chal_pgtbl_mapping_add(pgtbl_t pt, unsigned long addr, unsigned long page, u32_t flags, u32_t order)
 {
 	int                ret = 0;
 	struct ert_intern *pte;
@@ -302,10 +302,10 @@ chal_pgtbl_mapping_add(pgtbl_t pt, u32_t addr, u32_t page, u32_t flags, u32_t or
 }
 
 int
-chal_pgtbl_cosframe_add(pgtbl_t pt, u32_t addr, u32_t page, u32_t flags, u32_t order)
+chal_pgtbl_cosframe_add(pgtbl_t pt, unsigned long addr, unsigned long page, u32_t flags, u32_t order)
 {
 	struct ert_intern *pte;
-	u32_t              orig_v, accum = 0;
+	u32_t              orig_v = 0, accum = 0;
 
 	assert(pt);
 	assert((PGTBL_FLAG_MASK & page) == 0);
@@ -328,7 +328,7 @@ chal_pgtbl_cosframe_add(pgtbl_t pt, u32_t addr, u32_t page, u32_t flags, u32_t o
 
 /* This function updates flags of an existing mapping. */
 int
-chal_pgtbl_mapping_mod(pgtbl_t pt, u32_t addr, u32_t flags, u32_t *prevflags)
+chal_pgtbl_mapping_mod(pgtbl_t pt, unsigned long addr, u32_t flags, u32_t *prevflags)
 {
 	/* Not used for now. TODO: add retypetbl_ref / _deref */
 
@@ -361,7 +361,7 @@ chal_pgtbl_mapping_mod(pgtbl_t pt, u32_t addr, u32_t flags, u32_t *prevflags)
  * which tracks quiescence for us.
  */
 int
-chal_pgtbl_mapping_del(pgtbl_t pt, u32_t addr, u32_t liv_id)
+chal_pgtbl_mapping_del(pgtbl_t pt, unsigned long addr, u32_t liv_id)
 {
 	int                ret;
 	struct ert_intern *pte;
@@ -450,13 +450,15 @@ chal_pgtbl_mapping_scan(struct cap_pgtbl *pt)
 
 	return 0;
 }
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-local-addr"
 void *
-chal_pgtbl_lkup_lvl(pgtbl_t pt, u32_t addr, u32_t *flags, u32_t start_lvl, u32_t end_lvl)
+chal_pgtbl_lkup_lvl(pgtbl_t pt, unsigned long addr, u32_t *flags, u32_t start_lvl, u32_t end_lvl)
 {
 	return __pgtbl_lkupani((pgtbl_t)((unsigned long)pt | X86_PGTBL_PRESENT), addr >> PGTBL_PAGEIDX_SHIFT, start_lvl,
 	                       end_lvl, flags);
 }
+#pragma GCC diagnostic pop
 
 int
 chal_pgtbl_ispresent(u32_t flags)

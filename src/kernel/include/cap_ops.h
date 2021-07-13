@@ -174,7 +174,7 @@ cap_kmem_freeze(struct captbl *t, capid_t target_cap)
 		if ((l & CAP_REFCNT_MAX) > 1 || l & CAP_MEM_FROZEN_FLAG) return -EINVAL;
 
 		rdtscll(ct->frozen_ts);
-		ret = cos_cas((unsigned long *)&ct->refcnt_flags, l, l | CAP_MEM_FROZEN_FLAG);
+		ret = cos_cas_32((u32_t *)&ct->refcnt_flags, l, l | CAP_MEM_FROZEN_FLAG);
 		if (ret != CAS_SUCCESS) return -ECASFAIL;
 	} else if (ch->type == CAP_PGTBL) {
 		struct cap_pgtbl *pt = (struct cap_pgtbl *)ch;
@@ -182,7 +182,7 @@ cap_kmem_freeze(struct captbl *t, capid_t target_cap)
 		if ((l & CAP_REFCNT_MAX) > 1 || l & CAP_MEM_FROZEN_FLAG) return -EINVAL;
 
 		rdtscll(pt->frozen_ts);
-		ret = cos_cas((unsigned long *)&pt->refcnt_flags, l, l | CAP_MEM_FROZEN_FLAG);
+		ret = cos_cas_32((u32_t *)&pt->refcnt_flags, l, l | CAP_MEM_FROZEN_FLAG);
 		if (ret != CAS_SUCCESS) return -ECASFAIL;
 	} else {
 		return -EINVAL;

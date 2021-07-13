@@ -107,15 +107,15 @@ extern struct retype_info_glb glb_retype_tbl[N_RETYPE_SLOTS];
 /* physical address boundary check */
 #define PA_BOUNDARY_CHECK()                                                                            \
 	do {                                                                                           \
-		if (unlikely(!(((u32_t)pa >= COS_MEM_START) && ((u32_t)pa < COS_MEM_BOUND))            \
-			     && !(((u32_t)pa >= chal_kernel_mem_pa) && ((u32_t)pa < COS_KMEM_BOUND)))) \
+		if (unlikely(!(((unsigned long)pa >= COS_MEM_START) && ((unsigned long)pa < COS_MEM_BOUND))            \
+			     && !(((unsigned long)pa >= chal_kernel_mem_pa) && ((unsigned long)pa < COS_KMEM_BOUND)))) \
 			return -EINVAL;                                                                \
 	} while (0)
 
 /* get the index of the memory set. */
 #define GET_MEM_IDX(pa)                                                                 \
-	(((u32_t)pa >= COS_MEM_START) ? (((u32_t)(pa) - COS_MEM_START) / RETYPE_MEM_SIZE) \
-	                              : (((u32_t)(pa) - chal_kernel_mem_pa) / RETYPE_MEM_SIZE + N_USER_MEM_SETS))
+	(((unsigned long)pa >= COS_MEM_START) ? (((unsigned long)(pa) - COS_MEM_START) / RETYPE_MEM_SIZE) \
+	                              : (((unsigned long)(pa) - chal_kernel_mem_pa) / RETYPE_MEM_SIZE + N_USER_MEM_SETS))
 /* The minimum/maximum page order - currently 4kB/1MB pages. This is fine because we don't support large pages on ARM */
 #define MIN_PAGE_ORDER               12
 #define MAX_PAGE_ORDER               22
@@ -136,7 +136,7 @@ extern struct retype_info_glb glb_retype_tbl[N_RETYPE_SLOTS];
 static inline int
 retypetbl_cas(u32_t *a, u32_t old, u32_t new)
 {
-	return cos_cas((unsigned long *)a, old, new);
+	return cos_cas_32((u32_t *)a, old, new);
 }
 
 int retypetbl_retype2user(void *pa, u32_t order);

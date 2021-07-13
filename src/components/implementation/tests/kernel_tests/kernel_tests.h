@@ -46,7 +46,7 @@
 
 #define TEST_NPAGES (1024 * 2)  /* Testing with 8MB for now */
 
-unsigned int cyc_per_usec;
+extern unsigned int cyc_per_usec;
 
 extern struct cos_compinfo booter_info;
 extern thdcap_t         termthd[]; /* switch to this to shutdown */

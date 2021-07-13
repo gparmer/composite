@@ -65,20 +65,11 @@ elf_chk_format(struct elf_hdr *hdr)
 	unsigned char *s = hdr->e_ident;
 
 	/* Format:  "0x7fELF1" where the 1 is for 32 bit */
-	if (s[0] != 0x7f || s[1] != 'E' || s[2] != 'L' || s[3] != 'F' || s[4] != 1) return -1;
-	return 0;
+	if (s[0] == 0x7f && s[1] == 'E' && s[2] == 'L' && s[3] == 'F' && s[4] == 1) return 1;
+	if (s[0] == 0x7f && s[1] == 'E' && s[2] == 'L' && s[3] == 'F' && s[4] == 2) return 2;
+	return -1;
 }
 
-/*
- * Returns the address of the entry function, or 0 on error.
- */
-static inline vaddr_t
-elf_entry_addr(struct elf_hdr *hdr)
-{
-	if (elf_chk_format(hdr)) return 0;
-
-	return (vaddr_t)hdr->e_entry;
-}
 
 /*
  * Get the nmem-th contiguous memory region in the binary.  Return -1
@@ -86,13 +77,13 @@ elf_entry_addr(struct elf_hdr *hdr)
  * regions, and 0 if `mem` is properly populated.
  */
 static inline int
-elf_contig_mem(struct elf_hdr *hdr, unsigned int nmem, struct elf_contig_mem *mem)
+elf32_contig_mem(struct elf_hdr *hdr, unsigned int nmem, struct elf_contig_mem *mem)
 {
 	struct elf32_proghdr *proghdr, *memsect = NULL;
 	u32_t off;
 	unsigned int i, cntmem;
 
-	if (elf_chk_format(hdr) ||
+	if (elf_chk_format(hdr) != 1 ||
 	    hdr->e_phentsize != sizeof(struct elf32_proghdr)) return -1;
 
 	proghdr = (struct elf32_proghdr *)((char *)hdr + hdr->e_phoff);
@@ -116,6 +107,103 @@ elf_contig_mem(struct elf_hdr *hdr, unsigned int nmem, struct elf_contig_mem *me
 	};
 
 	return 0;
+}
+
+/*
+ * This is the elf_64 related code
+ */
+struct elf64_hdr{
+        unsigned char   e_ident[16]; 
+        u16_t           e_type;
+        u16_t           e_machine;
+        u32_t           e_version;
+        u64_t           e_entry;
+        u64_t           e_phoff;
+        u64_t           e_shoff;
+        u32_t           e_flags;
+        u16_t           e_ehsize;
+        u16_t           e_phentsize;
+        u16_t           e_phnum;
+        u16_t           e_shentsize;
+        u16_t           e_shnum;
+        u16_t           e_shstrndx;
+};
+
+
+struct elf64_proghdr {
+        u32_t    p_type;
+        u32_t    p_flags;
+        u64_t    p_offset;
+        u64_t    p_vaddr;
+        u64_t    p_paddr;
+        u64_t    p_filesz;
+        u64_t    p_memsz;
+        u64_t    p_align;
+};
+
+
+static inline int
+elf64_contig_mem(struct elf64_hdr *hdr, unsigned int nmem, struct elf_contig_mem *mem)
+{
+	struct elf64_proghdr *proghdr, *memsect = NULL;
+	u32_t off;
+	unsigned int i, cntmem;
+
+	if (elf_chk_format((struct elf_hdr *)hdr) != 2||
+	    hdr->e_phentsize != sizeof(struct elf64_proghdr)) return -1;
+
+	proghdr = (struct elf64_proghdr *)((char *)hdr + hdr->e_phoff);
+
+	for (i = 0, cntmem = 0; i < hdr->e_phnum && cntmem <= nmem; i++) {
+		if (proghdr[i].p_type != ELF_PH_LOAD) continue;
+		if (cntmem == nmem) {
+			memsect = &proghdr[i];
+			break;
+		}
+		cntmem++;
+	}
+	if (memsect == NULL) return 1;
+
+	*mem = (struct elf_contig_mem){
+		.vstart = memsect->p_vaddr,
+		.mem    = (char *)hdr + memsect->p_offset,
+		.objsz  = memsect->p_filesz,
+		.sz     = memsect->p_memsz,
+		.access = memsect->p_flags
+	};
+	return 0;
+}
+
+/*
+ * Returns the address of the entry function, or 0 on error.
+ */
+static inline vaddr_t
+elf_entry_addr(struct elf_hdr *hdr)
+{
+	if (elf_chk_format(hdr) == 1){
+		return (vaddr_t)hdr->e_entry;
+	} else if(elf_chk_format(hdr) == 2){
+		return (vaddr_t)(((struct elf64_hdr* )hdr)->e_entry);
+	}
+
+	return 0;
+}
+
+/*
+ * Get the nmem-th contiguous memory region in the binary.  Return -1
+ * if the elf object isn't shaped correctly, 1 if there aren't `nmem`
+ * regions, and 0 if `mem` is properly populated.
+ */
+static inline int
+elf_contig_mem(struct elf_hdr *hdr, unsigned int nmem, struct elf_contig_mem *mem)
+{
+	int ret = elf_chk_format(hdr);
+	if (ret == 1){
+		return elf32_contig_mem(hdr, nmem, mem);
+	} else if (ret == 2) {
+		return elf64_contig_mem((struct elf64_hdr *)hdr, nmem, mem);
+	}
+	return -1;
 }
 
 /*
@@ -160,6 +248,5 @@ elf_load_info(struct elf_hdr *hdr, vaddr_t *ro_addr, size_t *ro_sz, char **ro_sr
 
 	return 0;
 }
-
 
 #endif	/* SIMPLE_ELF_H */
